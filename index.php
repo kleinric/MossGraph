@@ -34,19 +34,42 @@ class graph{
     }
 
     public function dot($lines){
+        global $config;
+        
+        getParams();
+        
         $text  = "strict graph myGraph {\nsize=\"(20,100)\";\n ";
-        foreach($this->adj as $s => $d){
-            foreach($d as $v => $edge){
+        foreach ($this->adj as $s => $d) {
+            foreach ($d as $v => $edge) {
+
                 $w = $edge['w'];
+
                 $l = $edge['l'];
                 $head = $edge['head'];
                 $tail = $edge['tail'];
                 
-                $width = max($head, $tail)/20;
+                $no_width = $config['params']['no_width'];
+                if($no_width){
+                    $width = 1;
+                }else{
+                    $width = max($head, $tail)/20;
+                }
+                
+                $no_lines = $config['params']['no_lines'];
+                $no_per = $config['params']['no_per'];
                 
                 
                 if($w >= $lines){
-                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[penwidth=$width, label=$w, URL=\"$l\", headlabel=\"$head%\", taillabel=\"$tail%\"];\n";
+                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[penwidth=$width";
+                    if(!$no_lines){
+                        $text .= ", label=$w";
+                    }
+                    if(!$no_per){
+                        $text .= ", headlabel=\"$head%\", taillabel=\"$tail%\"";
+                        
+                    }
+                    
+                    $text .= ", URL=\"$l\"];\n";
                 }
             }
 
@@ -154,11 +177,93 @@ function check_tmp() {
     }
 }
 
+function getParams(){
+    global $config;
+    
+    if(isset($_GET['moss'])){
+        $params['moss'] = $_GET['moss'];
+    }
+    
+    if(isset($_GET['lines'])){
+        $params['lines'] = $_GET['lines'];
+    }else{
+        $params['lines'] = 0;        
+    }
+    
+    if(isset($_GET['no_lines'])){
+        $params['no_lines'] = $_GET['no_lines'];
+    }else{
+        $params['no_lines'] = false;        
+    }
+    
+      
+    if(isset($_GET['no_per'])){
+        $params['no_per'] = $_GET['no_per'];
+    }else{
+        $params['no_per'] = false;        
+    }      
+    
+    if(isset($_GET['no_width'])){
+        $params['no_width'] = $_GET['no_width'];
+    }else{
+        $params['no_width'] = false;        
+    }      
+      
+    $config['params'] = $params;
+    
+    
+    
+}
+
+function drawForm($moss){
+    global $config;
+    getParams();
+    
+    $cut_lines = $config['params']['lines'];
+    $no_lines = $config['params']['no_lines'];
+    if($no_lines) {
+        $no_lines = "checked";
+    }else{
+        $no_lines = "";
+    }
+    
+    $no_width = $config['params']['no_width'];
+    if($no_width) {
+        $no_width = "checked";
+    }else{
+        $no_width = "";
+    }
+         
+    $no_per = $config['params']['no_per'];
+    if($no_per) {
+        $no_per = "checked";
+    }else{
+        $no_per = "";
+    }
+
+    echo<<<FRM
+    <form id="cs_parser" name="cs_parser" action="" method="GET">
+        <table>
+        <tr><td>Moss Number: </td><td><input type="text" name="moss" value="$moss"></td></tr>
+        <tr><td>Cut Lines: </td><td><input type="text" name="lines" value="$cut_lines"></td></tr>
+        <tr><td>No Line Counts: </td><td><input type="checkbox" name="no_lines" value="1" $no_lines></td></tr>
+        <tr><td>No Line Thickness: </td><td><input type="checkbox" name="no_width" value="1" $no_width></td></tr>
+        <tr><td>No Line Percentages: </td><td><input type="checkbox" name="no_per" value="1" $no_per></td></tr>
+            </table>
+
+        <input type="submit">
+    </form>
+    
+FRM;
+    
+}
+
 function getMossNumber() {
     echo "Moss Number Required";
 }
 
 check_tmp();
+
 
 $lines = 0;
 if(isset($_GET['lines'])){
@@ -166,9 +271,11 @@ if(isset($_GET['lines'])){
 }
 
 if(isset($_GET['moss'])){
+    drawForm($_GET['moss']);
     showMoss($_GET['moss'], $lines);
 }else{
     getMossNumber();
+    drawForm();
 }
 
 ?>
