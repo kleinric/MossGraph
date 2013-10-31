@@ -6,12 +6,12 @@ require_once('./config.php');
 class graph{
     public $adj;
     public $gv;
-
+    
     public function graph(){
         $this->adj = array();
     }
 
-    public function addEdge($name1, $name2, $weight){
+    public function addEdge($name1, $name2, $weight, $link){
         if(!array_key_exists($name1, $this->adj)){
             $this->adj[$name1] = array();
         }
@@ -19,8 +19,10 @@ class graph{
             $this->adj[$name2] = array();
         }
 
-        $this->adj[$name1][$name2] = $weight;
-        $this->adj[$name2][$name1] = $weight;
+        $myEdge['w'] = $weight;
+        $myEdge['l'] = $link;
+        $this->adj[$name1][$name2] = $myEdge;
+        $this->adj[$name2][$name1] = $myEdge;
 
     }
 
@@ -31,9 +33,11 @@ class graph{
     public function dot($lines){
         $text  = "strict graph myGraph {\nsize=\"(20,100)\";\n ";
         foreach($this->adj as $s => $d){
-            foreach($d as $v => $w){
+            foreach($d as $v => $edge){
+                $w = $edge['w'];
+                $l = $edge['l'];
                 if($w >= $lines){
-                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[label=$w];\n";
+                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[label=$w, URL=\"$l\"];\n";
                 }
             }
 
@@ -59,9 +63,11 @@ class graph{
 
         file_put_contents("$filename.dot", $text);
 
-        exec("unflatten -f  -l 100 $filename.dot | /usr/bin/dot -Tpng -o $filename.png");
- 
-        return $config['data']."/$code/$code.png";
+        exec("unflatten -f  -l 100 $filename.dot | /usr/bin/dot -Tcmapx -o $filename.map -Tpng -o $filename.png");
+
+        $out['image_url'] = $config['data']."/$code/$code.png";
+        $out['map_local'] = "$filename.map";
+        return $out;
     }
 }
 
@@ -101,7 +107,8 @@ function showMoss($result, $lines){
         $name1 = $cols->item(0)->nodeValue;
         $name2 = $cols->item(1)->textContent;
         $linem = $cols->item(2)->textContent;
-
+        $link = $cols->item(0)->getElementsByTagName('a')->item(0)->getAttribute('href');
+        
         $pattern = "|\./|";
         $name1 = trim(preg_replace($pattern, "", $name1));
         $name2 = trim(preg_replace($pattern, "", $name2));
@@ -110,11 +117,15 @@ function showMoss($result, $lines){
         $name2 = trim(preg_replace($pattern, "", $name2));
         $linem = trim($linem);
 
-        $linematches->addEdge($name1, $name2, $linem);
+        $linematches->addEdge($name1, $name2, $linem, $link);
     }
 
-    $filename = $linematches->image($result, $lines);
-    echo "<img src=\"$filename\"/>";
+    
+    $g = $linematches->image($result, $lines);
+    $filename = $g['image_url'];
+  
+    echo "<img src=\"$filename\" USEMAP=\"#myGraph\"/>\n";
+    echo file_get_contents($g['map_local']);
     //header("Content-type: image/png");
     //$image=imagecreatefromjpeg($_GET['img']);
     //imagejpeg($image);
