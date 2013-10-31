@@ -21,8 +21,8 @@ class graph{
 
         $myEdge['w'] = $weight;
         $myEdge['l'] = $link;
-        $myEdge['head'] = "$p2%";
-        $myEdge['tail'] = "$p1%";
+        $myEdge['head'] = $p2;
+        $myEdge['tail'] = $p1;
         
         $this->adj[$name1][$name2] = $myEdge;
         //$this->adj[$name2][$name1] = $myEdge;
@@ -41,8 +41,12 @@ class graph{
                 $l = $edge['l'];
                 $head = $edge['head'];
                 $tail = $edge['tail'];
+                
+                $width = max($head, $tail)/20;
+                
+                
                 if($w >= $lines){
-                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[label=$w, URL=\"$l\", headlabel=\"$head\", taillabel=\"$tail\"];\n";
+                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[penwidth=$width, label=$w, URL=\"$l\", headlabel=\"$head%\", taillabel=\"$tail%\"];\n";
                 }
             }
 
