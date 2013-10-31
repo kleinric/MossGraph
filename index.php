@@ -11,7 +11,7 @@ class graph{
         $this->adj = array();
     }
 
-    public function addEdge($name1, $name2, $weight, $link){
+    public function addEdge($name1, $name2, $weight, $p1, $p2, $link){
         if(!array_key_exists($name1, $this->adj)){
             $this->adj[$name1] = array();
         }
@@ -21,8 +21,11 @@ class graph{
 
         $myEdge['w'] = $weight;
         $myEdge['l'] = $link;
+        $myEdge['head'] = "$p2%";
+        $myEdge['tail'] = "$p1%";
+        
         $this->adj[$name1][$name2] = $myEdge;
-        $this->adj[$name2][$name1] = $myEdge;
+        //$this->adj[$name2][$name1] = $myEdge;
 
     }
 
@@ -36,8 +39,10 @@ class graph{
             foreach($d as $v => $edge){
                 $w = $edge['w'];
                 $l = $edge['l'];
+                $head = $edge['head'];
+                $tail = $edge['tail'];
                 if($w >= $lines){
-                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[label=$w, URL=\"$l\"];\n";
+                    $text .= "\t\t\"" . $s . "\" -- \"" . $v . "\"[label=$w, URL=\"$l\", headlabel=\"$head\", taillabel=\"$tail\"];\n";
                 }
             }
 
@@ -112,12 +117,17 @@ function showMoss($result, $lines){
         $pattern = "|\./|";
         $name1 = trim(preg_replace($pattern, "", $name1));
         $name2 = trim(preg_replace($pattern, "", $name2));
+        
+        $pattern = "|.*\((..*)%\).*|";    
+        $p1 = trim(preg_replace($pattern, '\1', $name1));
+        $p2 = trim(preg_replace($pattern, '\1', $name2));  
+        
         $pattern = "| \(..*%\)|";
         $name1 = trim(preg_replace($pattern, "", $name1));
         $name2 = trim(preg_replace($pattern, "", $name2));
         $linem = trim($linem);
 
-        $linematches->addEdge($name1, $name2, $linem, $link);
+        $linematches->addEdge($name1, $name2, $linem, $p1, $p2, $link);
     }
 
     
