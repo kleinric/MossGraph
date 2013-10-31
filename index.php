@@ -60,8 +60,8 @@ class graph{
         file_put_contents("$filename.dot", $text);
 
         exec("unflatten -f  -l 100 $filename.dot | /usr/bin/dot -Tpng -o $filename.png");
-
-        return "$filename.png";
+ 
+        return $config['data']."/$code/$code.png";
     }
 }
 
@@ -114,10 +114,11 @@ function showMoss($result, $lines){
     }
 
     $filename = $linematches->image($result, $lines);
-    header("Content-type: image/png");
+    echo "<img src=\"$filename\"/>";
+    //header("Content-type: image/png");
     //$image=imagecreatefromjpeg($_GET['img']);
     //imagejpeg($image);
-    readfile($filename);
+    //readfile($filename);
 }
 
 function check_tmp() {

@@ -3,7 +3,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-$config['tmp'] = '/tmp/moss';
+$config['tmp'] = getcwd().'/data';
+$config['data']= dirname($_SERVER['REQUEST_URI'])."/data";
 
 $config['proxy'] = array(
     //'http' => array(
