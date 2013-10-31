@@ -1,9 +1,7 @@
 <?php
 
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
+require_once('./config.php');
 
-$config['tmp'] = '/tmp/moss';
 
 class graph{
     public $adj;
@@ -72,14 +70,11 @@ function showMoss($result, $lines){
 
     $doc = new DOMDocument();
 
-    $context = array(
-        'http' => array(
-                'proxy' => 'tcp://127.0.0.1:3128',
-                'request_fulluri' => true,
-        ),
+    if(!isset($config['proxy'])){
+        $config['proxy'] = array();
+    }
     
-    );
-    $sContext = stream_context_create($context);
+    $sContext = stream_context_create($config['proxy']);
 
     $folder = $config['tmp'] . "/$result";
     $filename = $folder . '/index.html';
