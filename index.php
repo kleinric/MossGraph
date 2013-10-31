@@ -3,6 +3,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
+$config['tmp'] = '/tmp/moss';
+
 class graph{
     public $adj;
     public $gv;
@@ -44,21 +46,30 @@ class graph{
     }
 
     public function image($code, $lines ){
+        global $config;
+
+        $filename = $config['tmp'] . "/$code/$code";
+
         $text = $this->dot($lines);
 
-        unlink("/tmp/moss/$code.dot");
-        unlink("/tmp/moss/$code.png");
-        file_put_contents ("/tmp/moss/$code.dot", $text);
+        if (file_exists("$filename.dot")) {
+            unlink("$filename.dot");
+        }
+        if (file_exists("$filename.png")) {
+            unlink("$filename.png");
+        }
 
-        exec("unflatten -f  -l 100 /tmp/moss/$code.dot | /usr/bin/dot -Tpng -o /tmp/moss/$code.png");
+        file_put_contents("$filename.dot", $text);
 
-        return "/tmp/moss/$code.png";
+        exec("unflatten -f  -l 100 $filename.dot | /usr/bin/dot -Tpng -o $filename.png");
+
+        return "$filename.png";
     }
-
-
 }
 
 function showMoss($result, $lines){
+    global $config;
+
     $doc = new DOMDocument();
 
     $context = array(
@@ -70,24 +81,32 @@ function showMoss($result, $lines){
     );
     $sContext = stream_context_create($context);
 
-    $source = file_get_contents("http://moss.stanford.edu/results/$result/", false, $sContext);
-    //$source = file_get_contents("results.html");
+    $folder = $config['tmp'] . "/$result";
+    $filename = $folder . '/index.html';
+    if (!file_exists($filename)) {
+        mkdir($folder);
+        $source = file_get_contents("http://moss.stanford.edu/results/$result/", false, $sContext);
+        file_put_contents($filename, $source);
+    } else {
+        $source = file_get_contents($filename);
+    }
+    
     $doc->loadHTML($source);
 
     $table = $doc->getElementsByTagName("table");
     $table = $table->item(0);
-    
+
     $rows = $table->getElementsByTagName("tr");
-    
+
     $linematches = new graph();
     for ($i = 1; $i < $rows->length; $i++){
         $row = $rows->item($i);
         $cols = $row->getElementsByTagName("td");
-    
+
         $name1 = $cols->item(0)->nodeValue;
         $name2 = $cols->item(1)->textContent;
         $linem = $cols->item(2)->textContent;
-        
+
         $pattern = "|\./|";
         $name1 = trim(preg_replace($pattern, "", $name1));
         $name2 = trim(preg_replace($pattern, "", $name2));
@@ -95,10 +114,10 @@ function showMoss($result, $lines){
         $name1 = trim(preg_replace($pattern, "", $name1));
         $name2 = trim(preg_replace($pattern, "", $name2));
         $linem = trim($linem);
-    
+
         $linematches->addEdge($name1, $name2, $linem);
     }
-    
+
     $filename = $linematches->image($result, $lines);
     header("Content-type: image/png");
     //$image=imagecreatefromjpeg($_GET['img']);
@@ -106,10 +125,19 @@ function showMoss($result, $lines){
     readfile($filename);
 }
 
-function getMossNumber(){
-    echo "Moss Number Required";
+function check_tmp() {
+    global $config;
 
+    if (!file_exists($config['tmp'])) {
+        mkdir($config['tmp'], 0777);
+    }
 }
+
+function getMossNumber() {
+    echo "Moss Number Required";
+}
+
+check_tmp();
 
 $lines = 0;
 if(isset($_GET['lines'])){
