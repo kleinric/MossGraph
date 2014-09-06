@@ -21,7 +21,7 @@ function fetchMoss($mossID) {
     global $config;
 
     $sContext = stream_context_create($config['proxy']);
-    check_tmp();
+    check_tmp($config['tmp']);
 
     $folder = $config['tmp'] . "/$mossID";
     $filename = $folder . '/index.html';
